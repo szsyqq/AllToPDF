@@ -1,8 +1,22 @@
+# -----------------------------------------------------------------------------------------------------------------
+# AllToPDF
+# 将Excel文件中的地址转换为地理编码信息
+
+# 详细介绍：
+
+
+# 使用方法：
+
+
+# 注意：
+
+
+# © Yuping Pan 2023-2024
+# -----------------------------------------------------------------------------------------------------------------
+
 import os
 from natsort import natsorted
-import glob
 import fitz  # 导入本模块需安装pymupdf库
-import shutil
 from PIL import Image
 import filetype
 
@@ -208,6 +222,8 @@ def folder_in_pdf_out(path):
 folder = get_file_name_listdir(file_path)
 folder = natsorted(folder)
 
+error_count = 0
+
 _forbid_list = [".DS_Store", "Thumbs.db"]
 
 for __item in _forbid_list:
@@ -222,4 +238,11 @@ for _folder in folder:
     pdf = folder_in_pdf_out(folder_file_path)
 
     # 保存PDF
-    pdf.save(output_pdf_path + '/' + _folder + '.pdf')
+    try:
+        pdf.save(output_pdf_path + '/' + _folder + '.pdf')
+    except ValueError:
+        print(colored(f"ERR:{_folder}文件夹为空",'yellow'))
+        error_count = error_count + 1
+
+
+print(colored(f"错误个数:{error_count}",'yellow'))
