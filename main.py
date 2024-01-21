@@ -94,31 +94,38 @@ def create_word_file(txt_file,_temp_path):
 
     doc.save(_temp_path)
 
-# # 针对二级目录
-def convert_folder_to_pdf(path):
+def generate_prefix(level, is_last):
+    """
+    根据层级和是否为最后一个元素生成文件树的前缀
+    """
+    prefix = ""
+    if level > 0:
+        prefix += "│   " * (level - 1)
+        prefix += "├─ " if not is_last else "└─ "
+    return prefix
+
+
+def convert_folder_to_pdf(path, level=0, is_last=False):
     # 将文件夹中的内容转换为PDF
     in_folder = get_file_name_listdir(path)
     in_folder = natsorted(in_folder)
 
     forbid_list = [".DS_Store", "Thumbs.db"]
-
-    for forbid_list_item in forbid_list:
-        try:
-            in_folder.remove(forbid_list_item)
-        except ValueError:
-            pass
+    in_folder = [f for f in in_folder if f not in forbid_list]
 
     doc = fitz.open()
 
-    for in_file in in_folder:
+    for index, in_file in enumerate(in_folder):
+        in_file_path = os.path.join(path, in_file)
+        is_last_item = (index == len(in_folder) - 1)
 
-        in_file_path = path + '/' + in_file
+        prefix = generate_prefix(level, is_last_item)
 
         if is_folder(path, in_file):
             # 如果是文件夹，则递归处理
-            initial_pdf = convert_folder_to_pdf(in_file_path)
+            print(prefix + in_file + "/")
+            initial_pdf = convert_folder_to_pdf(in_file_path, level + 1, is_last_item)
             doc.insert_pdf(initial_pdf)
-            # print("Success:" + in_file)
 
         else:
             in_file_kind = get_file_extension(path + '/' + in_file)
@@ -144,7 +151,7 @@ def convert_folder_to_pdf(path):
                         imgpdf = fitz.open("pdf", pdfbytes)
                         doc.insert_pdf(imgpdf)
 
-                        print("Success:" + in_file)
+                        # print("Success:" + in_file)
 
                     except:
                         _print_text = "ERR Loading:" + in_file
@@ -156,7 +163,7 @@ def convert_folder_to_pdf(path):
                         stream = bytearray(open(in_file_path, "rb").read())
                         pdf_fitz = fitz.open("pdf", stream)
                         doc.insert_pdf(pdf_fitz)
-                        print("Success:" + in_file)
+                        # print("Success:" + in_file)
                     except:
                         _print_text = "ERR Loading:" + in_file
                         print(colored(_print_text, 'red'))
@@ -171,7 +178,7 @@ def convert_folder_to_pdf(path):
                         pdf_fitz = fitz.open("pdf", stream)
                         doc.insert_pdf(pdf_fitz)
 
-                        print("Success:" + in_file)
+                        # print("Success:" + in_file)
                     except:
                         _print_text = "ERR Loading:" + in_file
                         print(colored(_print_text, 'red'))
@@ -189,7 +196,7 @@ def convert_folder_to_pdf(path):
                         pdf_fitz = fitz.open("pdf", stream)
                         doc.insert_pdf(pdf_fitz)
 
-                        print("Success:" + in_file)
+                        # print("Success:" + in_file)
                     except:
                         _print_text = "ERR Loading:" + in_file
                         print(colored(_print_text, 'red'))
@@ -198,8 +205,10 @@ def convert_folder_to_pdf(path):
                     _print_text ="ERR Unknown Type:" + in_file
                     print(colored(_print_text, 'red'))
 
+                print(prefix + in_file + " [处理成功]")
+
             except AttributeError:
-                _print_text = "ERR: AttributeError" + in_file
+                _print_text = prefix + in_file + " [处理失败]"
                 print(colored(_print_text, 'red'))
 
     return doc
@@ -225,10 +234,10 @@ for __item in _forbid_list:
     except ValueError:
         pass
 
-for _folder in folder:
-    folder_file_path = file_path + '/' + _folder
-
-    pdf = convert_folder_to_pdf(folder_file_path)
+for index, _folder in enumerate(folder):
+    folder_file_path = os.path.join(file_path, _folder)
+    is_last_folder = (index == len(folder) - 1)
+    pdf = convert_folder_to_pdf(folder_file_path, 0, is_last_folder)
 
     # 保存PDF
     try:
