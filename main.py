@@ -18,15 +18,7 @@ import os
 from natsort import natsorted
 import fitz  # 导入本模块需安装pymupdf库
 from PIL import Image
-import filetype
-
-# # Excel to PDF
-# import jpype
-# import asposecells
-import subprocess
-
 from docx2pdf import convert
-
 from docx import Document
 from docx.shared import Pt
 from docx.oxml.ns import qn
@@ -34,7 +26,6 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 # Color print
 from termcolor import colored, cprint
-
 
 
 def get_file_name_listdir(file_dir):
@@ -92,24 +83,6 @@ def create_word_file(txt_file,_temp_path):
                 empty_paragraph = new_paragraph.insert_paragraph_before("")
 
     doc.save(_temp_path)
-
-# ————————————————————————————————————————————————————————————————————————————
-
-file_path = "/Users/panyp/PycharmProjects/AllToPDF/1 Folders"
-output_pdf_path = "/Users/panyp/PycharmProjects/AllToPDF/3 Output"
-
-# file_name = get_file_name_listdir(file_path)
-# file_name = natsorted(file_name)
-#
-# # Delete the forbid_list
-# forbid_list = [".DS_Store", "Thumbs.db"]
-#
-# for _item in forbid_list:
-#     try:
-#         file_name.remove(_item)
-#     except ValueError:
-#         pass
-
 
 # # 针对二级目录
 def folder_in_pdf_out(path):
@@ -216,8 +189,13 @@ def folder_in_pdf_out(path):
 
     return doc
 
-# ————————————————————————————————————————————————————————————————————————————
-# 主程序
+# 参数设置 ---------------------------------------------------------------------------
+
+file_path = "/Users/panyp/PycharmProjects/AllToPDF/1 Folders"
+output_pdf_path = "/Users/panyp/PycharmProjects/AllToPDF/3 Output"
+
+
+# 主程序 ------------------------------------------------------------------------------
 
 folder = get_file_name_listdir(file_path)
 folder = natsorted(folder)
