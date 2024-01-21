@@ -13,6 +13,7 @@
 # 3. 运行脚本：执行脚本后，它会自动处理指定路径下的所有文件，将它们转换为PDF，并保存在输出路径。
 
 # 注意：
+# - 本程序不支持Excel格式（xls，xlsx)
 # - 文件支持：确保输入文件是脚本支持的格式。当前支持的格式包括图片（JPG, PNG, GIF）、文档（DOC, DOCX, TXT）和PDF。
 # - 错误处理：脚本将跳过无法处理的文件，并在最后提供错误计数。
 # - 性能因素：处理大量或大尺寸文件时可能需要较长时间。
@@ -54,7 +55,9 @@ def get_file_extension(_file_path):
     返回:
     str: 文件扩展名。
     """
-    return os.path.splitext(_file_path)[1][1:]
+    in_file_kind = os.path.splitext(_file_path)[1][1:].lower()
+
+    return in_file_kind
 
 def get_file_name(_file_path):
     """
@@ -125,8 +128,7 @@ def convert_folder_to_pdf(path):
             # 根据文件类型处理文件
             try:
                 # 图片文件处理
-                if in_file_kind == "jpg" \
-                        or in_file_kind == "JPEG"  or in_file_kind == "jpeg" \
+                if in_file_kind == "jpg"  or in_file_kind == "jpeg" \
                         or in_file_kind == "png" or in_file_kind == "gif":
                     try:
                         im = Image.open(in_file_path)
@@ -149,7 +151,7 @@ def convert_folder_to_pdf(path):
                         print(colored(_print_text, 'red'))
 
                 # PDF文件处理
-                elif in_file_kind == "pdf" or in_file_kind == "PDF":
+                elif in_file_kind == "pdf" :
                     try:
                         stream = bytearray(open(in_file_path, "rb").read())
                         pdf_fitz = fitz.open("pdf", stream)
