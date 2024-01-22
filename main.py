@@ -14,6 +14,7 @@
 
 # 注意：
 # - 本程序不支持Excel格式（xls，xlsx)
+# - 文件夹不能为空
 # - 文件支持：确保输入文件是脚本支持的格式。当前支持的格式包括图片（JPG, PNG, GIF）、文档（DOC, DOCX, TXT）和PDF。
 # - 错误处理：脚本将跳过无法处理的文件，并在最后提供错误计数。
 # - 性能因素：处理大量或大尺寸文件时可能需要较长时间。
@@ -106,6 +107,13 @@ def generate_prefix(level, is_last):
 
 
 def convert_folder_to_pdf(path, level=0, is_last=False):
+    global error_count
+    global total_count
+
+    # 打印当前处理的文件夹名称
+    if level == 1:
+        print(path.split('/')[-1] + "/")
+
     # 将文件夹中的内容转换为PDF
     in_folder = get_file_name_listdir(path)
     in_folder = natsorted(in_folder)
@@ -121,6 +129,8 @@ def convert_folder_to_pdf(path, level=0, is_last=False):
 
         prefix = generate_prefix(level, is_last_item)
 
+        total_count = total_count + 1  # 成功计数
+
         if is_folder(path, in_file):
             # 如果是文件夹，则递归处理
             print(prefix + in_file + "/")
@@ -135,26 +145,24 @@ def convert_folder_to_pdf(path, level=0, is_last=False):
             # 根据文件类型处理文件
             try:
                 # 图片文件处理
-                if in_file_kind == "jpg"  or in_file_kind == "jpeg" \
-                        or in_file_kind == "png" or in_file_kind == "gif":
+                if in_file_kind in ["jpg", "jpeg", "png", "gif"]:
                     try:
                         im = Image.open(in_file_path)
+                        # 检查图片尺寸，如果太大，则适当缩小
+                        max_size = 8000  # 最大宽度或高度
+                        if im.size[0] > max_size or im.size[1] > max_size:
+                            im.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
                         im = im.rotate(0, expand=1)
-                        try:
-                            im.save(in_file_path)
-                        except OSError:
-                            im = im.convert('RGB')
-                            im.save(in_file_path)
+                        im_converted = im.convert('RGB') if im.mode != 'RGB' else im
+                        im_converted.save(in_file_path, quality=95, optimize=True)
 
                         imgdoc = fitz.open(in_file_path)
                         pdfbytes = imgdoc.convert_to_pdf()
                         imgpdf = fitz.open("pdf", pdfbytes)
                         doc.insert_pdf(imgpdf)
-
-                        # print("Success:" + in_file)
-
-                    except:
-                        _print_text = "ERR Loading:" + in_file
+                    except Exception as e:
+                        _print_text = f"ERR Loading {in_file}: {e}"
+                        error_count = error_count + 1  # 错误计数
                         print(colored(_print_text, 'red'))
 
                 # PDF文件处理
@@ -166,6 +174,7 @@ def convert_folder_to_pdf(path, level=0, is_last=False):
                         # print("Success:" + in_file)
                     except:
                         _print_text = "ERR Loading:" + in_file
+                        error_count = error_count + 1  # 错误计数
                         print(colored(_print_text, 'red'))
 
                 # Word文档处理
@@ -181,6 +190,7 @@ def convert_folder_to_pdf(path, level=0, is_last=False):
                         # print("Success:" + in_file)
                     except:
                         _print_text = "ERR Loading:" + in_file
+                        error_count = error_count + 1  # 错误计数
                         print(colored(_print_text, 'red'))
 
                 # TXT文件处理
@@ -199,16 +209,19 @@ def convert_folder_to_pdf(path, level=0, is_last=False):
                         # print("Success:" + in_file)
                     except:
                         _print_text = "ERR Loading:" + in_file
+                        error_count = error_count + 1  # 错误计数
                         print(colored(_print_text, 'red'))
 
                 else:
                     _print_text ="ERR Unknown Type:" + in_file
+                    error_count = error_count + 1  # 错误计数
                     print(colored(_print_text, 'red'))
 
                 print(prefix + in_file + " [处理成功]")
 
             except AttributeError:
                 _print_text = prefix + in_file + " [处理失败]"
+                error_count = error_count + 1  # 错误计数
                 print(colored(_print_text, 'red'))
 
     return doc
@@ -224,6 +237,7 @@ output_pdf_path = "/Users/panyp/PycharmProjects/AllToPDF/3 Output"
 folder = get_file_name_listdir(file_path)
 folder = natsorted(folder)
 
+total_count = 0
 error_count = 0
 
 _forbid_list = [".DS_Store", "Thumbs.db"]
@@ -237,7 +251,8 @@ for __item in _forbid_list:
 for index, _folder in enumerate(folder):
     folder_file_path = os.path.join(file_path, _folder)
     is_last_folder = (index == len(folder) - 1)
-    pdf = convert_folder_to_pdf(folder_file_path, 0, is_last_folder)
+    # print(f"处理文件夹: {_folder}")  # 打印当前正在处理的文件夹名称
+    pdf = convert_folder_to_pdf(folder_file_path, 1, is_last_folder)
 
     # 保存PDF
     try:
@@ -247,4 +262,5 @@ for index, _folder in enumerate(folder):
         error_count = error_count + 1
 
 
+print(colored(f"共计处理（包括文件夹）:{total_count}",'white'))
 print(colored(f"错误个数:{error_count}",'yellow'))
