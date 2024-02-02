@@ -135,7 +135,11 @@ def convert_folder_to_pdf(path, level=0, is_last=False):
             # 如果是文件夹，则递归处理
             print(prefix + in_file + "/")
             initial_pdf = convert_folder_to_pdf(in_file_path, level + 1, is_last_item)
-            doc.insert_pdf(initial_pdf)
+            if initial_pdf and initial_pdf.page_count > 0:  # 检查 initial_pdf 是否为空或无页面
+                doc.insert_pdf(initial_pdf)
+            else:
+                print(colored(f"{in_file_path} 文件夹为空或没有可转换的文件。", 'yellow'))
+                error_count = error_count + 1  # 错误计数
 
         else:
             in_file_kind = get_file_extension(path + '/' + in_file)
